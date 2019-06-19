@@ -17,22 +17,22 @@ class parserTinko {
 	}
 
 	public function getInfoPage() {
-		$html = file_get_html('https://www.tinko.ru/catalog/product/261949/');
+		$html = file_get_html('https://www.tinko.ru/catalog/product/281107/');
 
 		// название товара
 		$nameProduct = $html->find('.tovar-detail__title h1', 0)->plaintext;
 		// картинка товара
-		$imgProduct = $html->find('.tovar-detail__image img')->plaintext;
+		$imgProduct = $html->find('.tovar-detail__image img', 0)->src;
 		// Артикул производителя
-		$articulSupProduct = $html->find('.tovar-detail__code span')[3]->plaintext;
+		$articulSupProduct = trim($html->find('.tovar-detail__code span')[3]->plaintext);
     	// код продукта
-		$codeProduct = $html->find('.tovar-detail__code span')[1]->plaintext;
+		$codeProduct = trim($html->find('.tovar-detail__code span')[1]->plaintext);
     	// Производитель
-		$supProduct = $html->find('.tovar-detail__creator a')[0]->plaintext;
+		$supProduct = trim($html->find('.tovar-detail__creator a')[0]->plaintext);
     	// розничная цена
-		$retailPriceProduct = $html->find('.tovar-detail__price span')[0]->plaintext;
+		$retailPriceProduct = trim($html->find('.tovar-detail__price span')[0]->plaintext);
     	// оптовая цена
-		$wholesaleProduct = $html->find('.tovar-detail__price span')[2]->plaintext;
+		$wholesaleProduct = trim($html->find('.tovar-detail__price span')[2]->plaintext);
     	// краткое описание
 		$briefDescriptionProduct = $html->find('.tovar-detail__short-description span')[1]->plaintext;
 
@@ -70,16 +70,21 @@ class parserTinko {
 		$certificatesProducts = [];
 		foreach ($html->find('.tabs-content__item-toggle ul li a') as $certificatesProduct) {
 			if (strpos($certificatesProduct, '/sertificate/download.php?file=')) {
-				$certificatesProducts[] = $certificatesProduct->href . "<br>";
+				$certificatesProducts[] = [
+					'url' => $certificatesProduct->href
+				];
 			}	
 		}
 
 		// документация
 		$docProducts = [];
-		foreach ($html->find('.tovar-detail__docks-link a') as $docProduct) {
-			$docProducts[] = $docProduct->href . "<br>";
+		foreach ($html->find('.tovar-detail__docks-info') as $docProduct) {
+			$docProducts[] = [
+				'name' =>$docProduct->children(0)->plaintext,
+				'url' => $docProduct->children(1)->children(0)->href
+			];
 		}
-		// echo $nameProduct;
+
 		$this->dataProduct[] = [
 			'name' => $nameProduct,
 			'img' => $imgProduct,
@@ -107,4 +112,3 @@ class parserTinko {
 
 $parserTinko = new parserTinko();
 $parserTinko->getInfoPage();
-// $parserTinko->debug($parserTinko->dataProduct);
