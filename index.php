@@ -17,10 +17,12 @@ class parserTinko {
 	}
 
 	public function getInfoPage() {
-		$html = file_get_html('https://www.tinko.ru/catalog/product/224008/');
+		$html = file_get_html('https://www.tinko.ru/catalog/product/261949/');
 
-		// получаем название товара
+		// название товара
 		$nameProduct = $html->find('.tovar-detail__title h1', 0)->plaintext;
+		// картинка товара
+		$imgProduct = $html->find('.tovar-detail__image img')->plaintext;
 		// Артикул производителя
 		$articulSupProduct = $html->find('.tovar-detail__code span')[3]->plaintext;
     	// код продукта
@@ -33,27 +35,37 @@ class parserTinko {
 		$wholesaleProduct = $html->find('.tovar-detail__price span')[2]->plaintext;
     	// краткое описание
 		$briefDescriptionProduct = $html->find('.tovar-detail__short-description span')[1]->plaintext;
- 
+
 		for ($i = 0; $i < 7; $i++) {
-			$textTab = $html->find('.tabs-links__mobile')[$i];
-			$textTabText = $html->find('.tabs-links__mobile')[$i]->plaintext;
+			$tab = $html->find('.tabs-links__mobile')[$i];
+			$TabText = $html->find('.tabs-links__mobile')[$i]->plaintext;
 			
 			// Технические характеристики
-			if ($textTabText == 'Технические характеристики') {
+			if ($TabText == 'Технические характеристики') {
 				$characteristicsProduct = $html->find('.characteristics')[0]->innertext;
 			}
 
 			// Описание товара
-			if ($textTabText == 'Описание товара') {
-				$descriptionProduct = $textTab->next_sibling()->plaintext;
+			if ($TabText == 'Описание товара') {
+				$descriptionProduct = $tab->next_sibling()->plaintext;
 			}
 
 			// Дополнительное оборудование
-			if ($textTabText == 'Дополнительное оборудование') {
-				$additionalProduct = $textTab->next_sibling()->innertext;
-			}		
+			if ($TabText == 'Дополнительное оборудование') {
+				$additionalProduct = $tab->next_sibling()->innertext;
+			}
+			// типовые решения
+			if ($TabText == 'Типовые решения') {
+				$standardSolutions = [];
+				foreach ($html->find('.tovar-detail__solutions-title a') as $standardSolution) {
+					$standardSolutions[] = [
+						'name' => $standardSolution->title,
+						'url'  => $standardSolution->href
+					];
+				}
+			}
 		}
-    	
+
     	// сертификаты
 		$certificatesProducts = [];
 		foreach ($html->find('.tabs-content__item-toggle ul li a') as $certificatesProduct) {
@@ -70,6 +82,7 @@ class parserTinko {
 		// echo $nameProduct;
 		$this->dataProduct[] = [
 			'name' => $nameProduct,
+			'img' => $imgProduct,
 			'articul' => $articulSupProduct,
 			'code' => $codeProduct,
 			'sup' => $supProduct,
@@ -80,7 +93,8 @@ class parserTinko {
 			'cert' => $certificatesProducts,
 			'doc' => $docProducts,
 			'char' => $characteristicsProduct,
-			'addp' => $additionalProduct
+			'addp' => $additionalProduct,
+			'solution' => $standardSolutions
 		];
 
 		echo "<pre>"; print_r($this->dataProduct); echo  "</pre>";
