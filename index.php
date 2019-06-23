@@ -9,15 +9,49 @@ require_once 'simple_html_dom.php';
 
 class parserTinko {
 	// ссылка на сайт
-	private $siteUrl = 'https://www.tinko.ru/';
+	private $siteUrl = 'https://www.tinko.ru';
 	public $dataProduct = [];
 
-	public function getCategories($url) {
+	// ссылки на все категории
+	public function getCountCategories() {
+		$html = file_get_html('https://www.tinko.ru/catalog/');
 
+		foreach ($html->find('a') as $categories) {
+			if (strpos($categories, '/catalog/category/')) {
+				$categories->href . "<br>";
+			}	
+		}		
 	}
 
-	public function getInfoPage() {
-		$html = file_get_html('https://www.tinko.ru/catalog/product/281107/');
+	// получаем категорию и кол-во страниц, обходим их и берем ссылки на товары
+	public function getCategories($url) {
+		$html = file_get_html($url);
+		// if (isset($html->find('.pagination__dots')[0])) {
+		// 	$countPagination = $html->find('.pagination__dots')[0]->next_sibling()->plaintext;
+		// } else {
+		// 	$countPagination = $html->find('.catalog-products__next');
+
+		// }
+		 $countPagination = $html->find('.pagination__page-right-arrow')[0]->prev_sibling();
+		 echo $countPagination->children(1)->innertext;
+		// ->plaintext
+
+		$url .= "?PAGEN_1=";
+
+		for ($i = 1; $i <= $countPagination; $i++) {		 
+			$urlPage = $url . $i;
+			// получаем ссылки на товары с каждой страницы
+			$htmlPage = file_get_html($urlPage);
+
+			foreach ($htmlPage->find('.catalog-product-spisok__item-title a') as $lp) {
+				$urlProduct = $this->siteUrl . $lp->href;
+				// $this->getInfoPage($urlProduct);
+			}
+		}
+	}
+
+	public function getInfoPage($url) {
+		$html = file_get_html($url);
 
 		// название товара
 		$nameProduct = $html->find('.tovar-detail__title h1', 0)->plaintext;
@@ -85,7 +119,7 @@ class parserTinko {
 			];
 		}
 
-		$this->dataProduct[] = [
+		$dataProduct[] = [
 			'name' => $nameProduct,
 			'img' => $imgProduct,
 			'articul' => $articulSupProduct,
@@ -102,7 +136,9 @@ class parserTinko {
 			'solution' => $standardSolutions
 		];
 
-		echo "<pre>"; print_r($this->dataProduct); echo  "</pre>";
+		echo "<pre>"; print_r($dataProduct); echo  "</pre>";
+
+		echo "<hr><hr><hr><hr><hr>";
 	}
 
 	// public function debug($ar) {
@@ -111,4 +147,5 @@ class parserTinko {
 }
 
 $parserTinko = new parserTinko();
-$parserTinko->getInfoPage();
+// $parserTinko->getInfoPage();
+$parserTinko->getCategories('https://www.tinko.ru/catalog/category/1/');
